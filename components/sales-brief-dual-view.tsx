@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   MessageSquareQuote,
   Lightbulb,
@@ -100,49 +100,75 @@ function InternalView({
 }) {
   const [selectedStakeholder, setSelectedStakeholder] = useState<number>(0);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   const activeResult = stakeholderResults[selectedStakeholder];
 
   const handleExportPDF = async () => {
+    if (!pdfRef.current || !activeResult || exportingPDF) return;
+    setExportError(null);
     try {
       setExportingPDF(true);
-      await exportInternalViewPDF(stakeholderResults, selectedStakeholder, deal, output);
+      // Export ONLY the currently selected stakeholder's rendered brief.
+      await exportInternalViewPDF(pdfRef.current, deal, output, activeResult.brief.stakeholder);
     } catch (error) {
-      console.error('Error exporting PDF:', error);
+      console.error('[v0] Error exporting internal PDF:', error);
+      setExportError('The PDF could not be generated. Please try again.');
     } finally {
       setExportingPDF(false);
     }
   };
 
+  const scenarioRows: { label: string; value: string }[] = [
+    { label: 'Annual volume', value: `${(deal.annualSteelVolumeTonnes || 0).toLocaleString()} t` },
+    { label: 'Premium per tonne', value: `€${(deal.greenPremiumPerTonne || 0).toLocaleString()}` },
+    { label: 'Total annual premium', value: `€${(output.totalPremium || 0).toLocaleString()}` },
+    { label: 'Premium per product', value: `€${(output.premiumPerProduct || 0).toLocaleString()}` },
+    { label: 'Premium percentage', value: `${(output.premiumPercentage || 0).toFixed(1)}%` },
+    { label: 'Annual CO₂ reduction', value: `${(output.co2Saved || 0).toLocaleString()} t CO₂` },
+    { label: 'Illustrative carbon value', value: `€${(output.indicativeCarbonValue || 0).toLocaleString()}` },
+    { label: 'Proof score', value: `${output.proofScore ?? '—'}` },
+    { label: 'Certification status', value: deal.certificationStatus || '—' },
+    { label: 'Supply reliability', value: deal.supplyReliability || '—' },
+    { label: 'Technical qualification', value: deal.technicalQualificationStatus || '—' },
+    { label: 'Delivery timeline', value: deal.deliveryTimeline || '—' },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Header with Export Button */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Header with Export Button (excluded from PDF capture) */}
+      <div data-pdf-ignore="true" className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Internal Sales Brief</h2>
           <p className="text-sm text-muted-foreground mt-1">Detailed stakeholder-by-stakeholder analysis for your sales team</p>
         </div>
-        <button
-          onClick={handleExportPDF}
-          disabled={exportingPDF}
-          className="flex items-center gap-2 rounded-lg bg-[var(--brand-green)] px-4 py-2 text-white hover:bg-[var(--brand-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {exportingPDF ? (
-            <>
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              <Download className="size-4" aria-hidden />
-              Export to PDF
-            </>
-          )}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleExportPDF}
+            disabled={exportingPDF}
+            className="flex items-center gap-2 rounded-lg bg-[var(--brand-green)] px-4 py-2 text-white hover:bg-[var(--brand-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {exportingPDF ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download className="size-4" aria-hidden />
+                Export Current Stakeholder PDF
+              </>
+            )}
+          </button>
+          {exportError ? (
+            <p className="text-xs text-[var(--risk-high)]">{exportError}</p>
+          ) : null}
+        </div>
       </div>
 
-      {/* Stakeholder Selector */}
-      <div className="rounded-lg border border-border bg-surface p-4">
+      {/* Stakeholder Selector (excluded from PDF capture) */}
+      <div data-pdf-ignore="true" className="rounded-lg border border-border bg-surface p-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-3">
           Select Stakeholder to View Detailed Brief
         </p>
@@ -163,9 +189,22 @@ function InternalView({
         </div>
       </div>
 
-      {/* Active Stakeholder Brief */}
+      {/* Active Stakeholder Brief (captured for the PDF) */}
       {activeResult && (
-        <div className="space-y-4">
+        <div ref={pdfRef} className="pdf-export-content space-y-4 bg-surface p-2">
+          {/* PDF-only header with the requested Saarstahl logo */}
+          <PdfOnlyHeader
+            docTitle="Internal Sales View"
+            confidential="Internal Use Only"
+            meta={[
+              { label: 'Company', value: deal.companyName || '—' },
+              { label: 'Deal ID', value: deal.dealId || '—' },
+              { label: 'Product / Application', value: deal.productName || '—' },
+              { label: 'Selected stakeholder', value: activeResult.brief.stakeholder },
+              { label: 'Export date', value: new Date().toLocaleDateString('en-GB') },
+            ]}
+          />
+
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--brand-green)]/30 bg-[var(--brand-green-soft)] px-4 py-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-[var(--brand-green-dark)]">
@@ -238,6 +277,30 @@ function InternalView({
               {activeResult.brief.recommendedNextStep}
             </p>
           </div>
+
+          {/* PDF-only: scenario context & commercial KPIs */}
+          <div className="pdf-only hidden rounded-xl border border-border bg-surface p-4">
+            <h4 className="mb-3 text-sm font-semibold text-foreground">
+              Scenario Context &amp; Commercial KPIs
+            </h4>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
+              {scenarioRows.map((row) => (
+                <div key={row.label} className="flex justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="font-medium text-foreground">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* PDF-only: assessment disclaimer */}
+          <div className="pdf-only hidden rounded-lg border border-border bg-surface-subtle p-3">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              This internal prototype brief is based on an illustrative role-based assessment and the
+              entered scenario data. It is intended for sales preparation and does not represent
+              validated customer behaviour, guaranteed commercial outcomes or legal compliance advice.
+            </p>
+          </div>
         </div>
       )}
     </div>
@@ -252,13 +315,18 @@ function CustomerView({
   output: BusinessValueOutput;
 }) {
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   const handleExportPDF = async () => {
+    if (!pdfRef.current || exportingPDF) return;
+    setExportError(null);
     try {
       setExportingPDF(true);
-      await exportCustomerViewPDF(deal, output);
+      await exportCustomerViewPDF(pdfRef.current, deal, output);
     } catch (error) {
-      console.error('Error exporting PDF:', error);
+      console.error('[v0] Error exporting customer PDF:', error);
+      setExportError('The PDF could not be generated. Please try again.');
     } finally {
       setExportingPDF(false);
     }
