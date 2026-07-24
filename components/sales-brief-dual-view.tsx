@@ -895,3 +895,4 @@ export function SalesBriefDualView({
     </div>
   );
 }
+
