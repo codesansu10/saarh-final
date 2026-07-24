@@ -89,6 +89,53 @@ function BenefitCard({
   );
 }
 
+// PDF-only header block. Hidden on screen (`hidden`) and revealed by the PDF
+// capture in the cloned document. Carries the requested Saarstahl logo.
+function PdfOnlyHeader({
+  docTitle,
+  confidential,
+  meta,
+}: {
+  docTitle: string;
+  confidential?: string;
+  meta: { label: string; value: string }[];
+}) {
+  return (
+    <div className="pdf-only hidden">
+      <div className="flex items-start justify-between gap-6">
+        {/* Logo source is injected as a data URL during capture; keep the aspect ratio */}
+        <img
+          data-pdf-logo
+          src="/api/pdf-logo"
+          alt="Saarstahl"
+          crossOrigin="anonymous"
+          style={{ width: '190px', height: 'auto' }}
+        />
+        <div className="text-right">
+          <p className="text-xl font-bold text-foreground">{docTitle}</p>
+          {confidential ? (
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--risk-high)]">
+              {confidential}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      {/* Thin divider below the logo, then the document meta */}
+      <div className="mt-4 border-t-2 border-[var(--brand-green)] pt-3">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+          {meta.map((m) => (
+            <div key={m.label} className="flex justify-between gap-4 text-sm">
+              <span className="text-muted-foreground">{m.label}</span>
+              <span className="font-medium text-foreground">{m.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-3 border-b border-border" />
+    </div>
+  );
+}
+
 function InternalView({
   stakeholderResults,
   deal,
@@ -334,30 +381,48 @@ function CustomerView({
 
   return (
     <div className="space-y-6">
-      {/* Header with Export Button */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Header with Export Button (excluded from PDF capture) */}
+      <div data-pdf-ignore="true" className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Green Steel Business Case</h2>
           <p className="text-sm text-muted-foreground mt-1">Discover why switching to green steel benefits your business</p>
         </div>
-        <button
-          onClick={handleExportPDF}
-          disabled={exportingPDF}
-          className="flex items-center gap-2 rounded-lg bg-[var(--brand-green)] px-4 py-2 text-white hover:bg-[var(--brand-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {exportingPDF ? (
-            <>
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              <Download className="size-4" aria-hidden />
-              Export to PDF
-            </>
-          )}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleExportPDF}
+            disabled={exportingPDF}
+            className="flex items-center gap-2 rounded-lg bg-[var(--brand-green)] px-4 py-2 text-white hover:bg-[var(--brand-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {exportingPDF ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download className="size-4" aria-hidden />
+                Export Customer Summary PDF
+              </>
+            )}
+          </button>
+          {exportError ? (
+            <p className="text-xs text-[var(--risk-high)]">{exportError}</p>
+          ) : null}
+        </div>
       </div>
+
+      {/* Captured area for the PDF */}
+      <div ref={pdfRef} className="pdf-export-content space-y-6 bg-surface p-2">
+        {/* PDF-only header with the requested Saarstahl logo */}
+        <PdfOnlyHeader
+          docTitle="Customer Side Summary"
+          meta={[
+            { label: 'Company', value: deal.companyName || '—' },
+            { label: 'Deal ID', value: deal.dealId || '—' },
+            { label: 'Product / Application', value: deal.productName || '—' },
+            { label: 'Export date', value: new Date().toLocaleDateString('en-GB') },
+          ]}
+        />
 
       {/* Executive Summary for Customer */}
       <div className="rounded-xl border border-[var(--brand-green)]/30 bg-[var(--brand-green-soft)] p-6">
@@ -510,9 +575,13 @@ function CustomerView({
         <p className="text-foreground mb-4">
           This assessment is a prototype based on entered parameters. To proceed, discuss technical qualification, certification requirements, and contractual terms with our team.
         </p>
-        <button className="bg-[var(--brand-green)] text-white px-6 py-2 rounded-lg font-medium hover:bg-[var(--brand-green-dark)] transition-colors">
+        <button
+          data-pdf-ignore="true"
+          className="bg-[var(--brand-green)] text-white px-6 py-2 rounded-lg font-medium hover:bg-[var(--brand-green-dark)] transition-colors"
+        >
           Schedule a Consultation
         </button>
+      </div>
       </div>
     </div>
   );
@@ -826,3 +895,4 @@ export function SalesBriefDualView({
     </div>
   );
 }
+
