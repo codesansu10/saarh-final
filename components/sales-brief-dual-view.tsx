@@ -42,20 +42,22 @@ function ItemList({
   if (!items.length) return null;
   return (
     <section className="rounded-xl border border-border bg-surface p-4">
-      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+      <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
         <Icon className="size-4 text-[var(--brand-green-dark)]" aria-hidden />
         {title}
       </h4>
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-3">
             <div className="flex flex-1 items-start gap-2">
-              <span className="mt-1 flex-shrink-0 text-[var(--brand-green-dark)]" aria-hidden>
+              <span className="mt-0.5 flex-shrink-0 text-[var(--brand-green-dark)] font-semibold text-lg leading-none" aria-hidden>
                 •
               </span>
-              <span className="flex-1 text-sm leading-relaxed text-foreground text-justify">
-                {item.text}
-              </span>
+              <div className="flex-1">
+                <span className="block text-sm leading-relaxed text-foreground text-justify">
+                  {item.text}
+                </span>
+              </div>
             </div>
             <div className="flex w-28 flex-shrink-0 justify-end">
               <ProvenanceBadge label={item.provenance} />
@@ -101,37 +103,39 @@ function PdfOnlyHeader({
   meta: { label: string; value: string }[];
 }) {
   return (
-    <div className="pdf-only hidden">
-      <div className="flex items-start justify-between gap-6">
+    <div className="pdf-only hidden mb-6 pb-4">
+      <div className="flex items-start justify-between gap-8">
         {/* Logo source is injected as a data URL during capture; keep the aspect ratio */}
         <img
           data-pdf-logo
           src="/api/pdf-logo"
           alt="Saarstahl"
           crossOrigin="anonymous"
-          style={{ width: '190px', height: 'auto' }}
+          style={{ width: '180px', height: 'auto' }}
         />
         <div className="text-right">
-          <p className="text-xl font-bold text-foreground">{docTitle}</p>
+          <p style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }} className="text-foreground">
+            {docTitle}
+          </p>
           {confidential ? (
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--risk-high)]">
+            <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em' }} className="uppercase text-[var(--risk-high)]">
               {confidential}
             </p>
           ) : null}
         </div>
       </div>
-      {/* Thin divider below the logo, then the document meta */}
-      <div className="mt-4 border-t-2 border-[var(--brand-green)] pt-3">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+      {/* Divider and document metadata */}
+      <div style={{ marginTop: '12px', borderTop: '2px solid var(--brand-green)', paddingTop: '10px' }}>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2">
           {meta.map((m) => (
-            <div key={m.label} className="flex justify-between gap-4 text-sm">
+            <div key={m.label} className="flex justify-between gap-4" style={{ fontSize: '12px' }}>
               <span className="text-muted-foreground">{m.label}</span>
               <span className="font-medium text-foreground">{m.value}</span>
             </div>
           ))}
         </div>
       </div>
-      <div className="mt-3 border-b border-border" />
+      <div style={{ marginTop: '10px', borderBottom: '1px solid var(--border)' }} />
     </div>
   );
 }
@@ -326,13 +330,13 @@ function InternalView({
           </div>
 
           {/* PDF-only: scenario context & commercial KPIs */}
-          <div className="pdf-only hidden rounded-xl border border-border bg-surface p-4">
-            <h4 className="mb-3 text-sm font-semibold text-foreground">
+          <div className="pdf-only hidden rounded-xl border border-border bg-surface p-4 mt-4">
+            <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }} className="text-foreground">
               Scenario Context &amp; Commercial KPIs
             </h4>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
               {scenarioRows.map((row) => (
-                <div key={row.label} className="flex justify-between gap-4 text-sm">
+                <div key={row.label} className="flex justify-between gap-4" style={{ fontSize: '12px' }}>
                   <span className="text-muted-foreground">{row.label}</span>
                   <span className="font-medium text-foreground">{row.value}</span>
                 </div>
@@ -341,8 +345,8 @@ function InternalView({
           </div>
 
           {/* PDF-only: assessment disclaimer */}
-          <div className="pdf-only hidden rounded-lg border border-border bg-surface-subtle p-3">
-            <p className="text-xs leading-relaxed text-muted-foreground">
+          <div className="pdf-only hidden rounded-lg border border-border bg-surface-subtle p-4 mt-4">
+            <p style={{ fontSize: '12px', lineHeight: '1.6', fontStyle: 'italic' }} className="text-muted-foreground leading-relaxed">
               This internal prototype brief is based on an illustrative role-based assessment and the
               entered scenario data. It is intended for sales preparation and does not represent
               validated customer behaviour, guaranteed commercial outcomes or legal compliance advice.

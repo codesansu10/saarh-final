@@ -143,6 +143,119 @@
   }
 }
 
+/* PDF Export Styling - Comprehensive text sizing and formatting */
+.pdf-export-content {
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+
+.pdf-export-content h1,
+.pdf-export-content h2,
+.pdf-export-content h3,
+.pdf-export-content h4,
+.pdf-export-content h5,
+.pdf-export-content h6 {
+  line-height: 1.4 !important;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.pdf-export-content h2 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.pdf-export-content h3 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.pdf-export-content h4 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.pdf-export-content p {
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  margin-bottom: 8px !important;
+}
+
+.pdf-export-content p em,
+.pdf-export-content p.italic,
+.pdf-export-content em {
+  font-style: italic !important;
+  font-size: 12px !important;
+}
+
+/* Bullet points and lists */
+.pdf-export-content ul,
+.pdf-export-content ol {
+  margin-bottom: 8px !important;
+}
+
+.pdf-export-content li {
+  font-size: 12px !important;
+  line-height: 1.7 !important;
+  margin-bottom: 6px !important;
+  margin-left: 0 !important;
+  list-style: none !important;
+}
+
+.pdf-export-content li::before {
+  content: '• ' !important;
+  color: var(--brand-green-dark) !important;
+  font-weight: 600 !important;
+  margin-right: 8px !important;
+}
+
+/* PDF-only blocks (headers, disclaimers, KPIs) */
+.pdf-only {
+  font-size: 12px !important;
+}
+
+.pdf-only h4 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+.pdf-only p {
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+
+.pdf-only p em,
+.pdf-only em {
+  font-style: italic !important;
+}
+
+/* Sections within PDFs */
+.pdf-export-content section {
+  margin-bottom: 8px !important;
+}
+
+.pdf-export-content section h4 {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+/* Flex containers for KPI grids */
+.pdf-export-content .grid,
+.pdf-export-content .flex {
+  font-size: 12px !important;
+}
+
+.pdf-export-content span {
+  font-size: 12px !important;
+}
+
+/* Text alignment and justification */
+.pdf-export-content .text-justify {
+  text-align: justify !important;
+}
+
 @media print {
   body * {
     visibility: hidden;
